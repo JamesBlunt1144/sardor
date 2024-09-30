@@ -19,5 +19,3 @@ exports.createNewOrderClient = async (req, res) => {
         }
     }
 
-
-
