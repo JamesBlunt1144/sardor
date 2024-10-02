@@ -78,3 +78,14 @@ exports.createNewOrderClient = async (req, res) => {
     }
 };
 
+exports.getAllOrders = async(req,res)=> {
+    try {
+        const knex = await Order_Client.knex();
+        const getAllOrders = await knex.raw(`SELECT * FROM order_client WHERE 1`);
+
+        return res.json({ success: true, getAllOrders: getAllOrders[0] });
+    } catch (error) {
+        console.error('Error fetching clients:', error); // Xatoni konsolga chiqarish
+        return res.status(500).json({ success: false, message: 'Buyurtmalarni olishda xatolik yuz berdi.' });
+    }
+}; 
