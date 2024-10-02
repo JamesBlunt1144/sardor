@@ -73,15 +73,15 @@ exports.exportCategoryToExcel = async (req, res) => {
 
 exports.searchCategory = async (req, res) => {
     const knex = await Categories.knex();
-    const { name } = req.query; // URL'dan name parametrini oling
+    const { searchTerm } = req.query; // URL'dan searchTerm parametrini oling
 
-    if (!name) {
-        return res.status(400).json({ success: false, message: 'Iltimos, name parametrini kiriting.' });
+    if (!searchTerm) {
+        return res.status(400).json({ success: false, message: 'Iltimos, searchTerm parametrini kiriting.' });
     }
 
     try {
         const searchResults = await knex('category')
-            .where('name', 'like', `%${name}%`) // name bo‘yicha izlash
+            .where('name', 'like', `%${searchTerm}%`) // searchTerm bo‘yicha izlash
             .select('*');
         
         return res.json({ success: true, searchResults });
