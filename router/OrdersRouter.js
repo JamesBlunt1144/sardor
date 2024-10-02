@@ -5,7 +5,7 @@ const OrdersController = require('../controllers/OrdersController')
 router.post('/create', OrdersController.createSale);
 
 // Buyurtmalarni bazaga yozish yo'li
-router.post('/sale', OrdersController.saleOrder);
+// router.post('/sale', OrdersController.saleOrder);
 
 // Korzinkani ko'rish
 router.get('/view', OrdersController.viewSale);
