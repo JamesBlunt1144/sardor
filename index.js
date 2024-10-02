@@ -5,7 +5,6 @@ const userRouter = require('./router/UserRouter')
 const ProductRouter = require('./router/ProductRouter')
 const ClientRouter= require ('./router/ClientRouter')
 const CategoryRouter = require('./router/CategoryRouter')
-const SaleRouter = require('./router/SaleRouter')
 const OrdersRouter = require('./router/OrdersRouter')
 const Order_ProductRouter = require('./router/Order_ProductRouter')
 const Order_ClientRouter = require('./router/Order_ClientRouter')
@@ -31,8 +30,6 @@ app.use('/product', ProductRouter)
 app.use('/clients' , ClientRouter)
 
 app.use('/category', CategoryRouter )
-
-app.use('/sale', SaleRouter)
 
 app.use ('/order',OrdersRouter)
 

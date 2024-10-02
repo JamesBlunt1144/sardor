@@ -38,45 +38,46 @@ const Product = require('../models/ProductModels')
 // }
 
 
-exports.createNewOrderClient = async (req, res) => {
-    try {
-        // Yangi buyurtma yaratish
-        const orderClient = await Order_Client.query().insert({
-            client_id: req.body.client_id
-        });
+// exports.createNewOrderClient = async (req, res) => {
+// try {
+//         // Yangi buyurtma yaratish
+//         const orderClient = await Order_Client.query().insert({
+//             client_id: req.body.client_id
+//         });
 
-        let total_summ = 0;
-        let total_quantity = 0;
+//         let total_summ = 0;
+//         let total_quantity = 0;
 
-        // Mahsulotlar bilan bog‘liq buyurtma mahsulotlarini qo‘shish
-        for (const element of req.body.products) {
-            const product = await Product.query().findById(element.product_id);
-            const totalPrice = product.price * element.quantity;
+//         // Mahsulotlar bilan bog‘liq buyurtma mahsulotlarini qo‘shish
+//         for (const element of req.body.products) {
+//             const product = await Product.query().findById(element.product_id);
+//             const totalPrice = product.price * element.quantity;
 
-            await Order_Product.query().insert({
-                order_client_id: orderClient.id,
-                product_id: element.product_id,
-                quantity: element.quantity,
-                price: product.price,
-                total_price: totalPrice
-            });
+//             await Order_Product.query().insert({
+//                 order_client_id: orderClient.id,
+//                 product_id: element.product_id,
+//                 quantity: element.quantity,
+//                 price: product.price,
+//                 total_price: totalPrice
+//             });
 
-            // Jamlangan summani va miqdorni yangilash
-            total_summ += totalPrice;
-            total_quantity += element.quantity;
-        }
+//             // Jamlangan summani va miqdorni yangilash
+//             total_summ += totalPrice;
+//             total_quantity += element.quantity;
+//         }
 
-        // Buyurtma ma'lumotlarini yangilash
-        await Order_Client.query().findById(orderClient.id).patch({
-            total_quantity: total_quantity,
-            total_price: total_summ
-        });
+//         // Buyurtma ma'lumotlarini yangilash
+//         await Order_Client.query().findById(orderClient.id).patch({
+//             total_quantity: total_quantity,
+//             total_price: total_summ
+//         });
 
-        res.status(201).json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
+//         res.status(201).json({ success: true });
+//     } catch (error) {
+//         console.error(error); // Xatolikni konsolga chiqarish
+//         res.status(500).json({ error: error.message });
+//     }
+// };
 
 exports.getAllOrders = async(req,res)=> {
     try {
@@ -89,3 +90,103 @@ exports.getAllOrders = async(req,res)=> {
         return res.status(500).json({ success: false, message: 'Buyurtmalarni olishda xatolik yuz berdi.' });
     }
 }; 
+
+
+exports.createNewOrderClient = async (req, res) => {
+    try {
+        // Yangi buyurtma yaratish
+        const orderClient = await Order_Client.query().insert({
+            client_id: req.body.client_id,
+            status: 0, // Dastlabki status 0
+            create_at: new Date() // Hozirgi vaqtni qo'shish
+        });
+
+        let total_summ = 0;
+        let total_quantity = 0;
+        let allProductsAvailable = true; // Mahsulotlar mavjudligini tekshirish
+
+        // Mahsulotlar bilan bog‘liq buyurtma mahsulotlarini qo‘shish
+        for (const element of req.body.products) {
+            const product = await Product.query().findById(element.product_id);
+
+            if (!product || product.quantity < element.quantity) {
+                allProductsAvailable = false; // Mahsulotlar yetarli emas
+                break;
+            }
+
+            const totalPrice = product.price * element.quantity;
+
+            await Order_Product.query().insert({
+                order_client_id: orderClient.id,
+                product_id: element.product_id,
+                quantity: element.quantity,
+                price: product.price,
+                total_price: totalPrice
+            });
+
+            // Mahsulot miqdorini kamaytirish
+            await Product.query().findById(element.product_id).patch({
+                quantity: product.quantity - element.quantity
+            });
+
+            // Jamlangan summani va miqdorni yangilash
+            total_summ += totalPrice;
+            total_quantity += element.quantity;
+        }
+
+        // Buyurtma ma'lumotlarini yangilash
+        if (allProductsAvailable) {
+            await Order_Client.query().findById(orderClient.id).patch({
+                total_quantity: total_quantity,
+                total_price: total_summ,
+                status: 1 // Agar buyurtma oxiriga yetkazilsa status 1
+            });
+            res.status(201).json({ success: true });
+        } else {
+            await Order_Client.query().findById(orderClient.id).patch({
+                status: 0 // Agar buyurtma oxiriga yetmay qolsa status 0
+            });
+            res.status(400).json({ success: false, message: 'Mahsulotlar yetarli emas' });
+        }
+    } catch (error) {
+        console.error(error); // Xatolikni konsolga chiqarish
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Buyurtmani bekor qilish
+exports.cancelOrderClient = async (orderClientId) => {
+    try {
+        // Buyurtma ma'lumotlarini olish
+        const orderProducts = await Order_Product.query().where('order_client_id', orderClientId);
+
+        // Har bir buyurtma mahsulotini qaytarish
+        for (const orderProduct of orderProducts) {
+            const product = await Product.query().findById(orderProduct.product_id);
+            // Mahsulot miqdorini qaytarish
+            await Product.query().findById(orderProduct.product_id).patch({
+                quantity: product.quantity + orderProduct.quantity
+            });
+        }
+
+        // Buyurtmani bekor qilish
+        await Order_Client.query().findById(orderClientId).patch({
+            status: 2 // Status 2 - bekor qilingan
+        });
+
+        console.log('Buyurtma bekor qilindi va mahsulotlar qaytarildi.');
+    } catch (error) {
+        console.error(error); // Xatolikni konsolga chiqarish
+        throw new Error('Buyurtma bekor qilishda xatolik yuz berdi');
+    }
+};
+
+exports.cancelProduct = async (req, res) => {
+    const orderClientId = req.params.id;
+    try {
+        await exports.cancelOrderClient(orderClientId); 
+        res.status(200).json({ success: true, message: 'Buyurtma bekor qilindi va mahsulotlar qaytarildi.' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
