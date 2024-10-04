@@ -9,7 +9,7 @@ router.get('/getAllOrder', Order_ClientController.getAllOrders)
 
 router.post('/cancel', Order_ClientController.cancelOrderClient)
 
-router.delete('/cancelProduct/:id', Order_ClientController.cancelProduct)
+router.delete('/cancelProduct/:id', Order_ClientController.cancelOrderClient)
 
 
 

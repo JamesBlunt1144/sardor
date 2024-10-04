@@ -155,11 +155,15 @@ exports.createNewOrderClient = async (req, res) => {
 };
 
 // Buyurtmani bekor qilish
-exports.cancelOrderClient = async (orderClientId) => {
+exports.cancelOrderClient = async (req,res) => {
     try {
         // Buyurtma ma'lumotlarini olish
-        const orderProducts = await Order_Product.query().where('order_client_id', orderClientId);
-
+        const orderProducts = await Order_Product.query().where('order_client_id', req.params.id).first();
+        const orderClient = await Order_Client.query().findOne('id',req.params.id)
+        if(orderClient.Status == 2){
+            console.log('1')
+            return res.status(400).json({success: false, msg:'bekor-qilingan'})
+        }
         // Har bir buyurtma mahsulotini qaytarish
         for (const orderProduct of orderProducts) {
             const product = await Product.query().findById(orderProduct.product_id);
@@ -173,7 +177,7 @@ exports.cancelOrderClient = async (orderClientId) => {
         await Order_Client.query().findById(orderClientId).patch({
             status: 2 // Status 2 - bekor qilingan
         });
-
+        return res.status(200).json({success: true})
         console.log('Buyurtma bekor qilindi va mahsulotlar qaytarildi.');
     } catch (error) {
         console.error(error); // Xatolikni konsolga chiqarish
@@ -183,6 +187,9 @@ exports.cancelOrderClient = async (orderClientId) => {
 
 exports.cancelProduct = async (req, res) => {
     const orderClientId = req.params.id;
+   if(orderClientId.status == 2){
+    return res.status(400).json({success: false, msg:'bekor-qilingan'})
+}
     try {
         await exports.cancelOrderClient(orderClientId); 
         res.status(200).json({ success: true, message: 'Buyurtma bekor qilindi va mahsulotlar qaytarildi.' });
@@ -190,3 +197,5 @@ exports.cancelProduct = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+
