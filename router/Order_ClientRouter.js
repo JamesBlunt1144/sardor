@@ -13,4 +13,6 @@ router.delete('/cancelProduct/:id', Order_ClientController.cancelProduct)
 
 router.get('/getOrder/:order_client_id',Order_ClientController.getOrderProducts)
 
+router.get('/search', Order_ClientController.getClientsByName)
+
 module.exports = router

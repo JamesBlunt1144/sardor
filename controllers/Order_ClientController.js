@@ -220,5 +220,28 @@ exports.getOrderProducts = async (req, res) => {
     }
 };
 
+// Mijozlarni F.I.SH bo'yicha qidirish funksiyasi
+exports.getClientsByName = async (req, res) => {
+    const { searchTerm } = req.params; // F.I.SH yoki uning bir qismini olish
+
+    try {
+        // Mijozlarni ism bo'yicha qidirish
+        const clients = await Client.query()
+            .where('first_name', 'like', `%${name}%`)
+            .orWhere('last_name', 'like', `%${name}%`)
+            .orWhere('middle_name', 'like', `%${name}%`);
+        
+        // Agar mijozlar topilmasa
+        if (clients.length === 0) {
+            return res.status(404).json({ success: false, message: 'Mijozlar topilmadi' });
+        }
+
+        // Topilgan mijozlarni qaytarish
+        res.status(200).json({ success: true, clients });
+    } catch (error) {
+        console.error('Error fetching clients by name:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
 
 
