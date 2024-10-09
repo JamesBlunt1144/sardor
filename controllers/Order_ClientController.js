@@ -210,7 +210,7 @@ exports.getOrderProducts = async (req, res) => {
         const orderProducts = await Order_Product.query().where({ order_client_id });
         
         if (orderProducts.length === 0) {
-            return res.status(404).json({ success: false, message: 'Buyurtma mahsulotlari topilmadi' });
+            return res.status(404).json({ success: false, message: 'Buyurtma topilmadi' });
         }
         
         res.status(200).json(orderProducts);
@@ -227,9 +227,9 @@ exports.getClientsByName = async (req, res) => {
     try {
         // Mijozlarni ism bo'yicha qidirish
         const clients = await Client.query()
-            .where('first_name', 'like', `%${name}%`)
-            .orWhere('last_name', 'like', `%${name}%`)
-            .orWhere('middle_name', 'like', `%${name}%`);
+            .where('first_name', 'like', `%${searchTerm}%`)
+            .orWhere('last_name', 'like', `%${searchTerm}%`)
+            .orWhere('middle_name', 'like', `%${searchTerm}%`);
         
         // Agar mijozlar topilmasa
         if (clients.length === 0) {
@@ -243,5 +243,4 @@ exports.getClientsByName = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-
 
